@@ -1,0 +1,85 @@
+body {
+  font-family: 'Open Sans' !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Open Sans' !important;
+}
+
+.navbar-brand {
+  font-size: 16px;
+  font-weight: 600;
+  color: white !important;
+}
+
+.nav-item {
+  font-size: 15px;
+}
+
+.slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 15px;
+  border-radius: 5px;   
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%; 
+  background: #5E72E4;
+  cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background: #5E72E4;
+  cursor: pointer;
+}
+
+#pointer {
+  cursor:pointer;
+}
+
+#slide-right {
+  position: relative;
+  animation-name: slide-right-animation;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+}
+@keyframes slide-right-animation {
+  0%   {opacity: 0; left:-30px; top:0px;}
+  100% {opacity: 1; left:0px; top:0px;}
+}
+
+#slide-right-delay {
+  position: relative;
+  animation-name: slide-right-animation-delay;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+}
+@keyframes slide-right-animation-delay {
+  0%   {opacity: 0; left:-30px; top:0px;}
+  50%  {opacity: 0; left:-30px; top:0px}
+  100% {opacity: 1; left:0px; top:0px;}
+}
+
+#slide-up {
+  position: relative;
+  animation-name: slide-up-animation;
+  animation-duration: 1.5s;
+  animation-iteration-count: 1;
+}
+@keyframes slide-up-animation {
+  0%   {opacity: 0; left:0px; top:30px;}
+  100% {opacity: 1; left:0px; top:0px;}
+}

@@ -1,12 +1,17 @@
+#!python
+# Example of a cherrypy application that serves static content,
+# as well as dynamic content.
+#
+# JMR@ua.pt 2016
+#
+# To run:
+#	python exampleApp.py
+
 import os.path
 import cherrypy
-import requests
-import sys
-import sqlite3 as sql
-import datetime
 import json
-import socket
-
+from models import object_model
+from models import image_model
 
 # The absolute path to this file's base directory:
 baseDir = os.path.dirname(os.path.abspath(__file__))
@@ -15,187 +20,108 @@ baseDir = os.path.dirname(os.path.abspath(__file__))
 config = {
   "/":     { "tools.staticdir.root": baseDir },
   "/js":   { "tools.staticdir.on": True,
-             "tools.staticdir.dir": "js" },
+             "tools.staticdir.dir": "resources/js" },
   "/css":  { "tools.staticdir.on": True,
-             "tools.staticdir.dir": "css" },
-  "/bootstrap":  { "tools.staticdir.on": True,
-             "tools.staticdir.dir": "bootstrap" },
-  "/fonts":  { "tools.staticdir.on": True,
-             "tools.staticdir.dir": "fonts" },
+             "tools.staticdir.dir": "resources/css" },
   "/html": { "tools.staticdir.on": True,
-             "tools.staticdir.dir": "html" },
+             "tools.staticdir.dir": "resources/html" },
+  "/fonts": { "tools.staticdir.on": True,
+            "tools.staticdir.dir": "resources/fonts" },
+  "/bootstrap": { "tools.staticdir.on": True,
+             "tools.staticdir.dir": "resources/bootstrap" },
+  "/images": { "tools.staticdir.on": True,
+             "tools.staticdir.dir": "resources/images" },
+  "/icons": { "tools.staticdir.on": True,
+             "tools.staticdir.dir": "resources/icons" },
 }
 
 class Root:
-    
-    # PROCESS OBJECTS IN IMAGE
-    @cherrypy.expose
-    def detect_objects(self, image_name):
-        session = requests.Session()
-        URL="http://image-dnn-sgh-jpbarraca.ws.atnog.av.it.pt/process"
-        image_name = 'images/' + image_name
-        with open(image_name, 'rb') as f:
-            file = {'img': f.read()}
-            r = session.post(url=URL, files=file, data=dict(thr=0.5))
-            if r.status_code == 200:
-                #print(r.json())
-                self.insert_new_image(image_name)
-                self.insert_new_object(r.json())
+  # This class atribute contains the HTML text of the main page:
+  indexHTML = open('resources/html/index.html', 'r').read()
+  searchByNameHTML = open('resources/html/searchbyname.html', 'r').read()
+  newImageHTML = open('resources/html/newimage.html', 'r').read()
+  searchByNameAndColorHTML = open('resources/html/searchbynameandcolor.html', 'r').read()
+  aboutHTML = open('resources/html/about.html','r').read();
+  editHTML = open('resources/html/edit.html','r').read();
 
-    # IMAGES DATABASE OPERATIONS
-    @cherrypy.expose
-    def all_images(self):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from images"
-        db.execute(str(statement))
-        result = db.fetchall()
-        db.close()
-        return json.dumps(result)
+  @cherrypy.expose
+  def index(self):
+      return Root.indexHTML
+  
+  @cherrypy.expose
+  def search_by_name(self):
+    return Root.searchByNameHTML
+  
+  @cherrypy.expose
+  def search_by_name_and_color(self):
+    return Root.searchByNameAndColorHTML
 
-    @cherrypy.expose
-    def insert_new_image(self, image_name):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "INSERT INTO images (name, created_at) VALUES (?, ?)"
-        data = (str(image_name), str(datetime.datetime.now().replace(microsecond=0)))
-        db.execute(str(statement), data)
-        con.commit()
-        con.close()
+  @cherrypy.expose
+  def sendImages(self):
+    return Root.newImageHTML
 
-    @cherrypy.expose
-    def search_image_by_name(self, name):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from images WHERE name = ?"
-        db.execute(str(statement), (name,))
-        result = db.fetchone()
-        db.close()
-        return json.dumps(result)
+  @cherrypy.expose
+  def about(self):
+    return Root.aboutHTML
 
-    @cherrypy.expose
-    def image_count(self):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from images"
-        db.execute(statement)
-        result = len(db.fetchall())
-        return json.dumps({"count" : result})
-        
+  @cherrypy.expose
+  def edit(self, **params):
+    return Root.editHTML
 
-        
+  @cherrypy.expose
+  def list(self, type, name="all", color="all"):
+    if type == "names":
+      return object_model.all_objects_name()
+    elif type == "detected":
+      if name == "all":
+        if color == "all":
+          return object_model.all_objects_detected()
+      else:
+        if color == "all":
+          return object_model.all_objects_detected_name(name)
+        else:
+          return object_model.all_objects_detected_name_color(name, color)
 
-    # OBJECTS DATABASE OPERATIONS
-    @cherrypy.expose
-    def all_objects(self):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from objects"
-        db.execute(str(statement))
-        result = db.fetchall()
-        db.close()
-        return json.dumps(result)
+  @cherrypy.expose
+  def get(self, id):
+    result = object_model.search_objects_by_id(id)
+    if result == 0:
+      result = image_model.search_image_by_id(id)
+      if result == 0:
+        return json.dumps("not found")
+    return result
+  @cherrypy.expose
+  def put(self, image):
+    saved_img_location = os.getcwd()+ '/resources/images/original/' + image.filename
+    fo = open(saved_img_location, 'wb')
+    while True:
+      data = image.file.read(8192)
+      if not data:
+        break
+      fo.write(data)
+    fo.close()
+    image_model.insert_new_image(saved_img_location)
+    image_model.detect_objects(saved_img_location)
+    return 'success'
 
-
-    @cherrypy.expose
-    def search_objects_by_image_id(self, image_id):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from objects WHERE image_id = ?"
-        db.execute(str(statement), (image_id,))
-        result = db.fetchall()
-        db.close()
-        return json.dumps(result)
-
-    @cherrypy.expose
-    def search_objects_by_name(self, name):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from objects WHERE type = ?"
-        db.execute(str(statement), (name,))
-        result = db.fetchall()
-        db.close()
-        return json.dumps(result)
-
-    @cherrypy.expose
-    def insert_new_object(self, object):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "INSERT INTO objects (type, image_id, created_at) VALUES (?, ?, ?)"
-        data = (str(object[0].get('class')), str(self.search_image_by_name(object)[0]), str(datetime.datetime.now().replace(microsecond=0)))
-        db.execute(str(statement), data)
-        con.commit()
-        con.close()
-
-
-    @cherrypy.expose
-    def object_count(self):
-        con = sql.connect("database.db")
-        db = con.cursor()
-        statement = "SELECT * from objects"
-        db.execute(statement)
-        result = len(db.fetchall())
-        return json.dumps({"count" : result})
-
-
-    #@cherrypy.expose
-    #def 
-
-
-
-    # This class atribute contains the HTML text of the main page:
-    indexPage = open(baseDir + '/html/index.html', 'r').read()
-    
-    #objects=Actions.all_objects(Actions)
-    searchTypePage = open(baseDir + '/html/searchbytype.html', 'r').read()
-    #searchTypeColorPage = open(baseDir + '/html/searchByType&Color.html', 'r').readlines()
-    #sendImgPage = open(baseDir + '/html/sendImage.html', 'r').readlines()
-    #objectsListedPage = open(baseDir + '/html/objects.html', 'r').readlines()
-    #aboutPage = open(baseDir + '/html/about.html', 'r').readlines()
-
-    
-    
-    @cherrypy.expose
-    def index(self):
-       return Root.indexPage
-
-    @cherrypy.expose
-    def api_test(self):
-        return Root.all_objects(self)
-    
-    @cherrypy.expose
-    def indedx(self):
-        return Root.searchTypePage
-
-
-'''
-    @cherrypy.expose
-    def searchType(self):
-        return Root.searchTypePage
-
-    @cherrypy.expose
-    def searchTypeColor(self):
-        return Root.searchTypeColorPage
-    
-    @cherrypy.expose
-    def sendImage(self):
-        return Root.sendImgPage
-    
-    @cherrypy.expose
-    def objectsListed(self):
-        return Root.objectsListedPage
+  @cherrypy.expose
+  def delete_object(self, id):
+    if id == "all":
+      count = len(json.loads(object_model.all_objects_detected()))
+      if count == 0: return json.dumps("Database already empty")
+      else : 
+        object_model.delete_all()
+        return json.dumps("success")
       
-    @cherrypy.expose
-    def about(self):
-        return Root.aboutPage
-   '''
+    else:
+      object_model.delete_object(id)
+      return json.dumps("success")
 
-if __name__ == '__main__':
-    cherrypy.server.socket_port = 8088
-    cherrypy.quickstart(Root(), "/", config)
-
-
-
-
-
-
+  @cherrypy.expose
+  def edit_object(self, id, obj, confidence):
+      object_model.edit(id, obj, confidence)
+      return json.dumps("Object updated")
+  
+cherrypy.config.update({'server.host' : '127.0.0.1'}) 
+cherrypy.config.update({'server.socket_port' : 8080})
+cherrypy.quickstart(Root(), "/", config)

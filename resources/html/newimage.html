@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>ObjectDetector - Send Images</title>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="fonts/line-awesome.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800">
+    <link rel="stylesheet" href="css/argon.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <nav class="navbar navbar-dark navbar-expand-md bg-dark">
+        <div class="container-fluid"><a class="navbar-brand" href="#">OBJECT <i class="la la-search"></i>&nbsp;DETECTOR</a><button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1"><span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+            <div
+                class="collapse navbar-collapse" id="navcol-1">
+                   <ul class="nav navbar-nav">
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/">List</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/search_by_name">Search by Name</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link active" href="/sendImages">Send Images</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/search_by_name_and_color">Search by Type and Color</a></li>
+                    <li class="nav-item" role="presentation"><a class="nav-link" href="/about">About</a></li>
+                </ul>
+        </div>
+        </div>
+    </nav>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-3 offset-md-4">
+                <input id="image" name="image" accept="image/*" onchange="updatePhoto(event)" type="file">
+                <h5 class="text-center mt-3" id="slide-up"><button class="btn btn-primary btn-sm" onclick="sendFile()"><i class="la la-file"></i>&nbsp;Send Image&nbsp;</button></h5>
+            </div>
+        </div>
+    </div>
+    <div class="container mt-5">
+        <div id="images_row" class="row">
+            
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="js/newimage.js"></script>
+    <script src="bootstrap/js/bootstrap.min.js"></script>
+</body>
+
+</html>
